@@ -1,16 +1,4 @@
-do_snip_data <- function(data_raw) {
-  data_cleaned <- data_raw[1:21] # Grabbing the first 21 columns
-  # Removing Data that is unkown, this removes ~3k records
-  data_cleaned <- subset(
-    data_raw,
-      data_cleaned$Education_Level != 'Unknown' &
-      data_cleaned$Marital_Status != 'Unknown' &
-      data_cleaned$Income_Category != 'Unknown', # This is probably the one we'll want to definately exclude unkown
-    select = c(1:21),
-  )
-  return(data_cleaned)
-}
-
+# This funciton will clean the data in a way that the models can interpret
 do_clean_data <- function(data_raw) {
   data_cleaned <- do_snip_data(data_raw)
   head(data_cleaned$Attrition_Flag)
@@ -21,17 +9,41 @@ do_clean_data <- function(data_raw) {
   return(data_cleaned)
 }
 
+
+# This function will snip the data that we want
+do_snip_data <- function(data_raw) {
+  data_cleaned <- data_raw[1:21] # Grabbing the first 21 columns
+  rownames(data_cleaned) <- data_cleaned$CLIENTNUM
+  # Removing Data that is unkown, this removes ~3k records
+  data_cleaned <- subset(
+    data_raw,
+      data_cleaned$Education_Level != 'Unknown' &
+      data_cleaned$Marital_Status != 'Unknown' &
+      data_cleaned$Income_Category != 'Unknown',
+    select = c(1:2,5:14,16:17,18:21), # Narrowing our column choices
+  )
+  return(data_cleaned)
+}
+
+# This function will get the sample data
 do_get_data_sample <- function(data, factor) {
   return (sample(seq_len(nrow(data)), size = floor(factor * nrow(data))))
 }
 
+# This function will do the linear regression prediction
 do_lr_prediction <- function(data_testing, data_training, model_args) {
-  lrModel <-glm(model_args, family = 'binomial', data_training)
-  lrp <-predict(lrModel, data_testing, type = 'response')
+  lrp <-get_lr_model_predictions(data_testing, data_training, model_args)
 
   lrPredict <- ifelse(lrp >.2, 1, 0)
   lrP_class <-as.factor(lrPredict)
 
   return(lrP_class)
 
+}
+
+# This function will get the linear regression model
+get_lr_model_predictions <- function(data_testing, data_training, model_args) {
+  lrModel <-glm(model_args, family = 'binomial', data_training)
+  lrp <-predict(lrModel, data_testing, type = 'response')
+  return(lrp)
 }
