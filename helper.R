@@ -20,7 +20,7 @@ do_snip_data <- function(data_raw) {
       data_cleaned$Education_Level != 'Unknown' &
       data_cleaned$Marital_Status != 'Unknown' &
       data_cleaned$Income_Category != 'Unknown',
-    select = c(1:2,5:14,16:17,18:21), # Narrowing our column choices
+    select = c(1:2,5:15,17:18,20:21), # Narrowing our column choices
   )
   return(data_cleaned)
 }
@@ -46,4 +46,14 @@ get_lr_model_predictions <- function(data_testing, data_training, model_args) {
   lrModel <-glm(model_args, family = 'binomial', data_training)
   lrp <-predict(lrModel, data_testing, type = 'response')
   return(lrp)
+}
+
+# This function will manipulate the data for neural network modeling and predicting
+get_nn_data <- function(nn_data) {
+  nn_data[1] <- NULL
+  # Getting the factored data to behave as numbers
+  nn_data[sapply(nn_data, is.factor)] <- data.matrix(nn_data[sapply(nn_data, is.factor)])
+  nn_cor <- as.matrix(cor(nn_data))
+  nn_cor[!lower.tri(nn_cor)] <- 0
+  return (nn_data[,!apply(nn_cor, 2, function (x) any(abs(x) > 0.8))])
 }
